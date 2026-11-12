@@ -162,6 +162,8 @@ export async function signOutFromFirebase(): Promise<void> {
 export function getFirebaseAuthErrorMessage(err: unknown): string {
   const code = (err as { code?: string })?.code || '';
   switch (code) {
+    case 'auth/unauthorized-domain':
+      return 'This domain is not authorized for Firebase Sign-In yet. Add this hostname under Authentication → Settings → Authorized domains in the Firebase Console.';
     case 'auth/operation-not-allowed':
       return 'Email/Password sign-in is not enabled yet in Firebase Console. Open Authentication → Sign-in method in your Firebase project to turn it on, or use Google Sign-In.';
     case 'auth/invalid-email':

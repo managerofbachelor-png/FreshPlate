@@ -121,7 +121,7 @@ export const OfflineBanner: React.FC = () => {
   if (isOnline) return null;
 
   return (
-    <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#FFF9EC] border border-[#FFC53D] px-4 py-1.5 text-xs font-semibold text-[#1C2B1A] shadow-md whitespace-nowrap">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#FFF9EC] border border-[#FFC53D] px-4 py-1.5 text-xs font-semibold text-[#1C2B1A] shadow-md whitespace-nowrap">
       Offline Mode — Saved recipes & prices active
     </div>
   );

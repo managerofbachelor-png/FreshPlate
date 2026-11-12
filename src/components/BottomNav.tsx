@@ -21,9 +21,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab, pl
   return (
     <nav
       aria-label="Primary navigation"
-      className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-24px)] max-w-lg"
+      className="fixed top-3 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-24px)] max-w-lg"
     >
-      <div className="rounded-[28px] bg-white/95 px-2 py-1.5 shadow-[0_12px_32px_rgba(28,43,26,0.14)] flex items-center justify-between gap-1">
+      <div className="rounded-[28px] bg-white/95 backdrop-blur-md px-2 py-1.5 shadow-[0_12px_32px_rgba(28,43,26,0.14)] flex items-center justify-between gap-1">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

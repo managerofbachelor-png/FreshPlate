@@ -449,7 +449,9 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
-            className="min-h-screen relative z-10"
+            className={`min-h-screen relative z-10 ${
+              selectedRecipe || isTransitionLoading ? '' : 'pt-[68px]'
+            }`}
           >
             {isTransitionLoading ? (
               /* Soft green shimmer skeleton (never a spinner on white screen) */
@@ -614,7 +616,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.94 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#1C2B1A] text-white px-5 py-2.5 text-xs sm:text-sm font-semibold shadow-xl flex items-center gap-2 whitespace-nowrap"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#1C2B1A] text-white px-5 py-2.5 text-xs sm:text-sm font-semibold shadow-xl flex items-center gap-2 whitespace-nowrap"
           >
             <CheckCircle2 className="h-4 w-4 text-[#8DC63F]" />
             <span>{toast}</span>
