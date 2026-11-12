@@ -1,0 +1,178 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Primitives
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidSlotId(slotId, day, slot) {
+      return slotId is string
+        && slotId.size() <= 32
+        && slotId == day + '_' + slot;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'email', 'country', 'favoriteRecipeIds',
+          'bmiUnit', 'bmiCm', 'bmiKg', 'bmiFeet', 'bmiInches', 'bmiLbs',
+          'gymWeightKg', 'gymGoal',
+          'budgetUsAmount', 'budgetUsPeriod', 'budgetUsPeople',
+          'budgetBdAmount', 'budgetBdPeriod', 'budgetBdPeople',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'country', 'favoriteRecipeIds',
+          'bmiUnit', 'bmiCm', 'bmiKg', 'bmiFeet', 'bmiInches', 'bmiLbs',
+          'gymWeightKg', 'gymGoal',
+          'budgetUsAmount', 'budgetUsPeriod', 'budgetUsPeople',
+          'budgetBdAmount', 'budgetBdPeriod', 'budgetBdPeople',
+          'createdAt', 'updatedAt'
+        ])
+        && data.uid is string && isValidId(data.uid) && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && (request.auth.token.email == null || data.email.lower() == request.auth.token.email.lower())
+        && data.country in ['US', 'BD']
+        && data.favoriteRecipeIds is list
+        && data.favoriteRecipeIds.size() <= 50
+        && (data.favoriteRecipeIds.size() == 0 || (data.favoriteRecipeIds[0] is string && data.favoriteRecipeIds[0].size() <= 64))
+        && data.bmiUnit in ['metric', 'imperial']
+        && data.bmiCm is number && data.bmiCm >= 100 && data.bmiCm <= 240
+        && data.bmiKg is number && data.bmiKg >= 25 && data.bmiKg <= 250
+        && data.bmiFeet is number && data.bmiFeet >= 3 && data.bmiFeet <= 8
+        && data.bmiInches is number && data.bmiInches >= 0 && data.bmiInches <= 11
+        && data.bmiLbs is number && data.bmiLbs >= 55 && data.bmiLbs <= 550
+        && data.gymWeightKg is number && data.gymWeightKg >= 30 && data.gymWeightKg <= 250
+        && data.gymGoal in ['build', 'maintain', 'lose']
+        && data.budgetUsAmount is number && data.budgetUsAmount >= 10 && data.budgetUsAmount <= 50000
+        && data.budgetUsPeriod in ['week', 'month']
+        && data.budgetUsPeople is number && data.budgetUsPeople >= 1 && data.budgetUsPeople <= 12
+        && data.budgetBdAmount is number && data.budgetBdAmount >= 500 && data.budgetBdAmount <= 5000000
+        && data.budgetBdPeriod in ['week', 'month']
+        && data.budgetBdPeople is number && data.budgetBdPeople >= 1 && data.budgetBdPeople <= 12
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMealSlot(data, userId, slotId) {
+      return data.keys().hasAll(['ownerId', 'day', 'slot', 'recipeId', 'servings', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'day', 'slot', 'recipeId', 'servings', 'createdAt', 'updatedAt'])
+        && data.ownerId is string && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid && data.ownerId == userId
+        && data.day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        && data.slot in ['breakfast', 'lunch', 'dinner']
+        && isValidSlotId(slotId, data.day, data.slot)
+        && data.recipeId is string && data.recipeId.size() >= 1 && data.recipeId.size() <= 64
+        && data.recipeId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.servings is number && data.servings >= 1 && data.servings <= 12
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      // Strictly owner-only get (never blanket list on users PII)
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Sync Identity & Country
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'country', 'updatedAt']) ||
+          // Action: Toggle Favorite Recipes
+          incoming().diff(existing()).affectedKeys().hasOnly(['favoriteRecipeIds', 'updatedAt']) ||
+          // Action: Update BMI & Gym Targets
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'bmiUnit', 'bmiCm', 'bmiKg', 'bmiFeet', 'bmiInches', 'bmiLbs',
+            'gymWeightKg', 'gymGoal', 'updatedAt'
+          ]) ||
+          // Action: Update Budget Preferences
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'budgetUsAmount', 'budgetUsPeriod', 'budgetUsPeople',
+            'budgetBdAmount', 'budgetBdPeriod', 'budgetBdPeople', 'updatedAt'
+          ]) ||
+          // Action: Full Profile Sync
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'email', 'country', 'favoriteRecipeIds',
+            'bmiUnit', 'bmiCm', 'bmiKg', 'bmiFeet', 'bmiInches', 'bmiLbs',
+            'gymWeightKg', 'gymGoal',
+            'budgetUsAmount', 'budgetUsPeriod', 'budgetUsPeople',
+            'budgetBdAmount', 'budgetBdPeriod', 'budgetBdPeople',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      match /mealSlots/{slotId} {
+        allow get: if isValidId(userId) && isValidId(slotId) && isOwner(userId);
+        // Query Enforcer on list: enforce both parent path ownership and document ownerId (no get()/exists() in list)
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(slotId)
+          && isOwner(userId)
+          && isValidMealSlot(incoming(), userId, slotId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow update: if isValidId(userId)
+          && isValidId(slotId)
+          && isOwner(userId)
+          && isValidMealSlot(incoming(), userId, slotId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().day == existing().day
+          && incoming().slot == existing().slot
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            // Action: Replace Recipe
+            incoming().diff(existing()).affectedKeys().hasOnly(['recipeId', 'servings', 'updatedAt']) ||
+            // Action: Adjust Servings
+            incoming().diff(existing()).affectedKeys().hasOnly(['servings', 'updatedAt'])
+          );
+
+        allow delete: if isValidId(userId) && isValidId(slotId) && isOwner(userId);
+      }
+    }
+  }
+}

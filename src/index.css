@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-sage: #E9F2E3;
+    --green-primary: #7CB342;
+    --green-button: #8DC63F;
+    --green-hero-top: #7AB648;
+    --green-hero-bottom: #4E8A1F;
+    --text-dark: #1C2B1A;
+    --text-muted: #7A8A76;
+    --accent-tomato: #E4572E;
+    --accent-yellow: #FFC53D;
+    --accent-cream: #FFF9EC;
+  }
+
+  html {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #E9F2E3;
+    color: #1C2B1A;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Poppins', 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.fresh-card {
+  background: #FFFFFF;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(28, 43, 26, 0.08);
+}
+
+.fresh-hero-gradient {
+  background: linear-gradient(180deg, #7AB648 0%, #4E8A1F 100%);
+}
+
+.plate-ring-shadow {
+  box-shadow: 0 10px 24px rgba(28, 43, 26, 0.14), 0 0 0 6px #FFFFFF;
+}
+
+@keyframes freshShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.fresh-shimmer {
+  background: linear-gradient(90deg, #E2EED9 25%, #F2F8ED 50%, #E2EED9 75%);
+  background-size: 200% 100%;
+  animation: freshShimmer 1.4s ease-in-out infinite;
+}
+
+/* Hide scrollbars on horizontal chip strips while preserving scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fresh-shimmer {
+    animation: none;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Meal Planner",
+  "description": "Fresh Market mobile-first meal planner, weekly budget calculator, BMI checker, and high-protein gym guide for the US and Bangladesh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

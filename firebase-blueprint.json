@@ -1,0 +1,188 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user's personal Fresh Market settings, saved favorites, BMI inputs, gym targets, and grocery budget preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the profile owner."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "User's display name from Google Sign-In."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 160,
+          "description": "Verified Google account email address."
+        },
+        "country": {
+          "type": "string",
+          "enum": ["US", "BD"],
+          "description": "Selected shopping market country."
+        },
+        "favoriteRecipeIds": {
+          "type": "array",
+          "description": "Bounded list of saved favorite recipe IDs (max 50)."
+        },
+        "bmiUnit": {
+          "type": "string",
+          "enum": ["metric", "imperial"],
+          "description": "Preferred BMI unit system."
+        },
+        "bmiCm": {
+          "type": "number",
+          "description": "Height in centimeters."
+        },
+        "bmiKg": {
+          "type": "number",
+          "description": "Weight in kilograms."
+        },
+        "bmiFeet": {
+          "type": "number",
+          "description": "Height feet component."
+        },
+        "bmiInches": {
+          "type": "number",
+          "description": "Height inches component."
+        },
+        "bmiLbs": {
+          "type": "number",
+          "description": "Weight in pounds."
+        },
+        "gymWeightKg": {
+          "type": "number",
+          "description": "Body weight in kg for gym protein calculation."
+        },
+        "gymGoal": {
+          "type": "string",
+          "enum": ["build", "maintain", "lose"],
+          "description": "Fitness goal for protein and calorie targets."
+        },
+        "budgetUsAmount": {
+          "type": "number",
+          "description": "Saved US grocery budget in dollars."
+        },
+        "budgetUsPeriod": {
+          "type": "string",
+          "enum": ["week", "month"],
+          "description": "US budget period."
+        },
+        "budgetUsPeople": {
+          "type": "number",
+          "description": "Household size for US budget."
+        },
+        "budgetBdAmount": {
+          "type": "number",
+          "description": "Saved Bangladesh grocery budget in taka."
+        },
+        "budgetBdPeriod": {
+          "type": "string",
+          "enum": ["week", "month"],
+          "description": "Bangladesh budget period."
+        },
+        "budgetBdPeople": {
+          "type": "number",
+          "description": "Household size for Bangladesh budget."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "email",
+        "country",
+        "favoriteRecipeIds",
+        "bmiUnit",
+        "bmiCm",
+        "bmiKg",
+        "bmiFeet",
+        "bmiInches",
+        "bmiLbs",
+        "gymWeightKg",
+        "gymGoal",
+        "budgetUsAmount",
+        "budgetUsPeriod",
+        "budgetUsPeople",
+        "budgetBdAmount",
+        "budgetBdPeriod",
+        "budgetBdPeople",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MealPlanSlot": {
+      "title": "MealPlanSlot",
+      "description": "A planned recipe assigned to a specific day and meal slot in the user's weekly planner.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "day": {
+          "type": "string",
+          "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "description": "Day of the week."
+        },
+        "slot": {
+          "type": "string",
+          "enum": ["breakfast", "lunch", "dinner"],
+          "description": "Meal slot name."
+        },
+        "recipeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Selected recipe identifier."
+        },
+        "servings": {
+          "type": "number",
+          "description": "Number of servings planned for this slot (1-12)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when slot was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when slot was updated."
+        }
+      },
+      "required": ["ownerId", "day", "slot", "recipeId", "servings", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private per-user preferences, favorites, BMI, gym, and budget settings."
+    },
+    "/users/{userId}/mealSlots/{slotId}": {
+      "schema": { "$ref": "#/entities/MealPlanSlot" },
+      "description": "User's weekly meal plan slots keyed by {Day}_{slot}."
+    }
+  }
+}
